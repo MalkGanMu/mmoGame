@@ -12,6 +12,7 @@ export class SceneDef {
     public static LOGIN = { name: 'login', bundle: ModuleDef.BASIC };
     public static CREATE_ROLE = { name: 'create_role', bundle: ModuleDef.METAVERSE };
     public static WORLD = { name: 'world', bundle: ModuleDef.METAVERSE };
+    public static ROOM = { name: 'room1', bundle: ModuleDef.DILAO };
 }
 
 export interface SubWorldSceneParams {

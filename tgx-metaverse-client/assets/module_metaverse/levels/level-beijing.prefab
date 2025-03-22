@@ -227,7 +227,7 @@
     "propertyPath": [
       "targetWorld"
     ],
-    "value": "world-004"
+    "value": "world-000"
   },
   {
     "__type__": "cc.TargetInfo",

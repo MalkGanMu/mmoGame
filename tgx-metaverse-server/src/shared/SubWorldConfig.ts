@@ -15,6 +15,7 @@ const _subWorldMap = {} as any;
 
 const _subWorldList = [
     //公共子世界
+    { id: 'world-000', name: '地牢', scene: 'room1', isPublic: true, levelData: { prefab: null, bundle: 'module_room' } },
     { id: 'world-001', name: '北京', scene: 'world', isPublic: true, levelData: { prefab: 'levels/level-beijing', bundle: 'module_metaverse' } },
     { id: 'world-002', name: '上海', scene: 'world', isPublic: true, levelData: { prefab: 'levels/level-shanghai', bundle: 'module_metaverse' } },
     { id: 'world-003', name: '成都', scene: 'world-001', isPublic: true, levelData: { prefab: 'levels/level-chengdu', bundle: 'module_metaverse' } },

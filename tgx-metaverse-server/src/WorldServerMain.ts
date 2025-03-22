@@ -12,7 +12,7 @@ export const worldServer = new WorldServer({
     // 可改为通过环境变量调整配置参数
     port: port,
     worldServerId: 1,
-    publicSubWorldList: ['world-001', 'world-002', 'world-003', 'world-004'],
+    publicSubWorldList: ['world-000', 'world-001', 'world-002', 'world-003', 'world-004'],
     masterServerUrl: masterServerUrl,
     thisServerUrl: thisServerUrl
 });

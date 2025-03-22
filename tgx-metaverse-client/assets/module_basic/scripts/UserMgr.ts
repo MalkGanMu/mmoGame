@@ -76,6 +76,9 @@ export class UserMgr {
                 return;
             }
             let sceneInfo = { name: config.scene, bundle: ModuleDef.METAVERSE };
+            if (config.id == 'world-000') {
+                sceneInfo = { name: config.scene, bundle: ModuleDef.DILAO };
+            }
             SceneUtil.loadScene(sceneInfo, {
                 ...ret.res,
                 uid: UserMgr.inst.uid

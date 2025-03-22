@@ -42,7 +42,7 @@ let _subWorldData: SubWorldData;
 /**
  * WorldMgr 类，用于管理与子世界服务器的连接和相关数据
  */
-export class WorldMgr {
+export class RoomMgr {
     /**
      * 创建与世界服务器的连接
      * @param params 进入子世界的参数
@@ -109,7 +109,7 @@ export class WorldMgr {
      */
     private static async _connect(): Promise<{ isSucc: boolean, res?: ResJoinSubWorld, errMsg?: string }> {
         // 尝试连接到世界服务器
-        let resConnect = await WorldMgr.worldConn.connect();
+        let resConnect = await RoomMgr.worldConn.connect();
         // 如果连接失败
         if (!resConnect.isSucc) {
             // 返回包含失败信息的对象
@@ -117,7 +117,7 @@ export class WorldMgr {
         }
 
         // 尝试加入子世界
-        let retJoin = await WorldMgr.worldConn.callApi('JoinSubWorld', {
+        let retJoin = await RoomMgr.worldConn.callApi('JoinSubWorld', {
             token: _params.token,
             uid: UserMgr.inst.uid,
             time: _params.time,
