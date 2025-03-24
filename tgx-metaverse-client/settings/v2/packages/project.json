@@ -8,7 +8,22 @@
     }
   },
   "physics": {
-    "defaultMaterial": ""
+    "defaultMaterial": "",
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "wall"
+      },
+      {
+        "index": 2,
+        "name": "hero"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 4,
+      "2": 2
+    }
   },
   "__version__": "1.0.6",
   "fbx": {

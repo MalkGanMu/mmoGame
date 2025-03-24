@@ -1,4 +1,6 @@
-import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween } from 'cc';
+import { CharacterMovement2D } from '../../core_tgx/easy_controller/CharacterMovement2D';
+import { tgxEasyController, tgxEasyControllerEvent } from '../../core_tgx/tgx';
 import { SubWorldUserState } from '../../module_basic/shared/types/SubWorldUserState';
 import { SceneUtil } from '../../scripts/SceneDef';
 import { Player } from '../prefabs/Players/Player';
@@ -46,9 +48,38 @@ export class room extends Component {
                 this._playerLastState = curState;
             }
         }, 0.1);
+
+        // 监听控制器的移动事件
+        tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT, this.onMovement, this);
+        // 监听控制器的移动停止事件
+        tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT_STOP, this.onMovmentStop, this);
         
     }
+    /**
+     * 处理玩家移动事件
+     * @param degree 移动的角度
+     * @param strengthen 移动的强度
+     */
+    onMovement(degree: number, strengthen: number) {
+        // 如果当前玩家实例不存在，直接返回
+        if (!this.selfPlayer) {
+            return;
+        }
+        // 设置玩家的动画状态为 walking
+        this.selfPlayer.aniState = 'walking';
+    }
 
+    /**
+     * 处理玩家停止移动事件
+     */
+    onMovmentStop() {
+        // 如果当前玩家实例不存在，直接返回
+        if (!this.selfPlayer) {
+            return;
+        }
+        // 设置玩家的动画状态为 idle
+        this.selfPlayer.aniState = 'idle';
+    }
     update(deltaTime: number) {
         
     }
@@ -56,20 +87,6 @@ export class room extends Component {
     private _initClient() {
         // 创建世界连接
         RoomMgr.createWorldConnection(SceneUtil.sceneParams);
-
-        // // 获取子世界的关卡数据
-        // let levelData = RoomMgr.subWorldConfig.levelData;
-        // // 如果关卡数据、资源包和预制体名称都存在
-        // if (levelData && levelData.bundle && levelData.prefab) {
-        //     // 加载资源包
-        //     assetManager.loadBundle(levelData.bundle, (err, bundle: AssetManager.Bundle) => {
-        //         // 加载预制体
-        //         bundle.load(levelData.prefab, (err, prefab: Prefab) => {
-        //             // 将实例化的预制体添加到场景中
-        //             director.getScene().addChild(instantiate(prefab));
-        //         });
-        //     });
-        // }
 
         // 监听服务器的用户状态更新消息
         RoomMgr.worldConn.listenMsg('s2cMsg/UserStates', v => {
@@ -121,25 +138,13 @@ export class room extends Component {
             this.players.addChild(node);
             // 设置节点的位置
             node.setPosition(state.pos.x, state.pos.y, state.pos.z);
-            // 设置节点的旋转
-            node.setRotation(state.rotation.x, state.rotation.y, state.rotation.z, state.rotation.w);
+
+            // 获取 CharacterMovement2D 组件
+            const movementComponent = node.getComponent(CharacterMovement2D)!;
             // 获取节点的 Player 组件
             const player = node.getComponent(Player)!;
             // 设置玩家的动画状态
             player.aniState = state.aniState;
-            // // 从子世界数据中查找用户信息
-            // let userInfo = RoomMgr.subWorldData.users.find(v => v.uid === state.uid);
-            // // 如果用户信息存在
-            // if (userInfo) {
-            //     // 创建一个颜色对象
-            //     let color = new Color();
-            //     // 从用户的视觉 ID 转换为颜色
-            //     Color.fromUint32(color, userInfo.visualId);
-            //     // 设置玩家模型的主颜色
-            //     player.mesh.material?.setProperty('mainColor', color);
-            // }
-            // // 设置玩家名称标签的文本
-            // player.lblName.string = userInfo?.name || '???';
 
             // 如果是当前用户
             if (state.uid === RoomMgr.currentUser.uid) {
@@ -147,7 +152,9 @@ export class room extends Component {
                 this.selfPlayer = player;
                 // 标记该节点为当前玩家节点
                 this.selfPlayer.node['_isMyPlayer_'] = true;
-                // 设置相机的跟随目标
+                // 设置 CharacterMovement2D 组件的 isCurrentPlayer 属性为 true
+                movementComponent.isCurrentPlayer = true;
+            // 设置相机的跟随目标
                 // this.followCamera.target = node.getChildByName('focusTarget')!;
             }
             return;
@@ -157,9 +164,13 @@ export class room extends Component {
         if (state.uid === RoomMgr.currentUser.uid) {
             return;
         }
+        // 更新其他玩家的动画状态
+        node.getComponent(Player)!.aniState = state.aniState;
 
-        // // 更新其他玩家的动画状态
-        // node.getComponent(Player)!.aniState = state.aniState;
+        if (state.aniState == 'walking') {
+            node.setPosition(state.pos.x, state.pos.y, state.pos.z);
+            console.log(`移动玩家: ${node.name}`);
+        }
         // // 移除节点位置上的所有动画
         // TweenSystem.instance.ActionManager.removeAllActionsFromTarget(node.position as any);
         // // 使用插值动画平滑更新节点的位置和旋转
@@ -167,9 +178,25 @@ export class room extends Component {
         //     onUpdate: (v, ratio) => {
         //         // 这里原代码可能有误，node!.position = node!.position; 可删除
         //         // 更新节点的旋转
-        //         node!.rotation = Quat.slerp(tmpQuat, node!.rotation, state.rotation, ratio!);
+        //         // node!.rotation = Quat.slerp(tmpQuat, node!.rotation, state.rotation, ratio!);
         //     }
         // }).tag(99).start();
+    }
+
+    /**
+    * 组件销毁时调用的生命周期方法
+    */
+    onDestroy() {
+        // 取消监听服务器的用户状态更新消息
+        RoomMgr.worldConn.unlistenMsgAll('s2cMsg/UserStates');
+        // 取消监听服务器的用户加入消息
+        RoomMgr.worldConn.unlistenMsgAll('s2cMsg/UserJoin');
+        // 取消监听服务器的用户退出消息
+        RoomMgr.worldConn.unlistenMsgAll('s2cMsg/UserExit');
+        // 断开与服务器的连接
+        RoomMgr.worldConn.disconnect(3456, 'normal');
+        // 移除所有标签为 99 的动画
+        TweenSystem.instance.ActionManager.removeAllActionsByTag(99);
     }
 }
 
