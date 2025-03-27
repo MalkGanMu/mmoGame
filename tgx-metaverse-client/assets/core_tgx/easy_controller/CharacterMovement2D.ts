@@ -206,7 +206,6 @@ export class CharacterMovement2D extends Component {
 
         // 获取角色的刚体组件
         this._rigidBody = this.node.getComponent(RigidBody2D); 
-        console.log('刚体群:' + this._rigidBody.group);
     }
 
     onMovement(degree, strengthen) {
@@ -223,7 +222,6 @@ export class CharacterMovement2D extends Component {
         if (this._rigidBody) {
             // 设置刚体的线速度
             this._rigidBody.linearVelocity = this._direction.multiplyScalar(this._currentSpeed / 10); 
-            console.log('_currentSpeed:', this._currentSpeed);
         }
 
         if (this.needRotation) {

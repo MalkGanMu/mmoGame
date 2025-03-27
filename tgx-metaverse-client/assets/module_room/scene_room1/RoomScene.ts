@@ -1,4 +1,5 @@
-import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween, CameraComponent, Camera } from 'cc';
+import { DIYFloowCamera2D } from '../../core_tgx/easy_camera/DIYFloowCamera2D';
 import { CharacterMovement2D } from '../../core_tgx/easy_controller/CharacterMovement2D';
 import { tgxEasyController, tgxEasyControllerEvent } from '../../core_tgx/tgx';
 import { SubWorldUserState } from '../../module_basic/shared/types/SubWorldUserState';
@@ -15,8 +16,14 @@ export class room extends Component {
     // 玩家预制体，用于创建新的玩家节点，通过属性面板赋值
     @property(Prefab)
     prefabPlayer!: Prefab;
+
     @property(Node)
     players!: Node;
+
+    // // 第三人称相机控制器，用于跟随玩家，通过属性面板赋值
+    @property(Node)
+    followCamera!: Node;
+
     // 记录玩家的上一个动画状态，用于判断是否需要向服务器上报状态
     private _playerLastState: string = '';
 
@@ -154,8 +161,13 @@ export class room extends Component {
                 this.selfPlayer.node['_isMyPlayer_'] = true;
                 // 设置 CharacterMovement2D 组件的 isCurrentPlayer 属性为 true
                 movementComponent.isCurrentPlayer = true;
-            // 设置相机的跟随目标
-                // this.followCamera.target = node.getChildByName('focusTarget')!;
+    
+
+                // 获取 tgxFollowCamera2D 脚本组件实例
+                const followCameraScript = this.followCamera.getComponent(DIYFloowCamera2D);
+                if (followCameraScript) {
+                    followCameraScript.target = node;
+                }
             }
             return;
         }
