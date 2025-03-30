@@ -3,10 +3,13 @@ import { MsgUpdateSubWorldState } from './worldServer/admin/MsgUpdateSubWorldSta
 import { ReqAuth, ResAuth } from './worldServer/admin/PtlAuth';
 import { ReqCreateSubWorld, ResCreateSubWorld } from './worldServer/admin/PtlCreateSubWorld';
 import { MsgUserState } from './worldServer/c2sMsg/MsgUserState';
+import { ReqAddMonster, ResAddMonster } from './worldServer/PtlAddMonster';
+import { ReqDelMonster, ResDelMonster } from './worldServer/PtlDelMonster';
 import { ReqExitSubWorld, ResExitSubWorld } from './worldServer/PtlExitSubWorld';
 import { ReqJoinSubWorld, ResJoinSubWorld } from './worldServer/PtlJoinSubWorld';
 import { ReqSendChat, ResSendChat } from './worldServer/PtlSendChat';
 import { MsgChat } from './worldServer/s2cMsg/MsgChat';
+import { MsgMonsterStates } from './worldServer/s2cMsg/MsgMonsterStates';
 import { MsgUserExit } from './worldServer/s2cMsg/MsgUserExit';
 import { MsgUserJoin } from './worldServer/s2cMsg/MsgUserJoin';
 import { MsgUserStates } from './worldServer/s2cMsg/MsgUserStates';
@@ -20,6 +23,14 @@ export interface ServiceType {
         "admin/CreateSubWorld": {
             req: ReqCreateSubWorld,
             res: ResCreateSubWorld
+        },
+        "AddMonster": {
+            req: ReqAddMonster,
+            res: ResAddMonster
+        },
+        "DelMonster": {
+            req: ReqDelMonster,
+            res: ResDelMonster
         },
         "ExitSubWorld": {
             req: ReqExitSubWorld,
@@ -38,6 +49,7 @@ export interface ServiceType {
         "admin/UpdateSubWorldState": MsgUpdateSubWorldState,
         "c2sMsg/UserState": MsgUserState,
         "s2cMsg/Chat": MsgChat,
+        "s2cMsg/MonsterStates": MsgMonsterStates,
         "s2cMsg/UserExit": MsgUserExit,
         "s2cMsg/UserJoin": MsgUserJoin,
         "s2cMsg/UserStates": MsgUserStates
@@ -45,7 +57,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 7,
+    "version": 9,
     "services": [
         {
             "id": 13,
@@ -74,6 +86,18 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "msg"
         },
         {
+            "id": 21,
+            "name": "AddMonster",
+            "type": "api",
+            "conf": {}
+        },
+        {
+            "id": 23,
+            "name": "DelMonster",
+            "type": "api",
+            "conf": {}
+        },
+        {
             "id": 14,
             "name": "ExitSubWorld",
             "type": "api",
@@ -94,6 +118,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 17,
             "name": "s2cMsg/Chat",
+            "type": "msg"
+        },
+        {
+            "id": 22,
+            "name": "s2cMsg/MonsterStates",
             "type": "msg"
         },
         {
@@ -390,7 +419,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "PtlExitSubWorld/ReqExitSubWorld": {
+        "PtlAddMonster/ReqAddMonster": {
             "type": "Interface",
             "extends": [
                 {
@@ -400,12 +429,126 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "../base/BaseRequest"
                     }
                 }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "monsterState",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../../types/SubWorldMonsterState/SubWorldMonsterState"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "subWorldId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
             ]
         },
         "../base/BaseRequest": {
             "type": "Interface"
         },
-        "PtlExitSubWorld/ResExitSubWorld": {
+        "../../types/SubWorldMonsterState/SubWorldMonsterState": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "uid",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "pos",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "x",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "y",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "z",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "health",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "aniState",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../../types/SubWorldMonsterState/PlayerAniState"
+                    }
+                }
+            ]
+        },
+        "../../types/SubWorldMonsterState/PlayerAniState": {
+            "type": "Union",
+            "members": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "idle"
+                    }
+                },
+                {
+                    "id": 1,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "walking"
+                    }
+                },
+                {
+                    "id": 2,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "wave"
+                    }
+                },
+                {
+                    "id": 3,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "punch"
+                    }
+                },
+                {
+                    "id": 4,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "dance"
+                    }
+                }
+            ]
+        },
+        "PtlAddMonster/ResAddMonster": {
             "type": "Interface",
             "extends": [
                 {
@@ -419,6 +562,71 @@ export const serviceProto: ServiceProto<ServiceType> = {
         },
         "../base/BaseResponse": {
             "type": "Interface"
+        },
+        "PtlDelMonster/ReqDelMonster": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseRequest"
+                    }
+                }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "monsterState",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../../types/SubWorldMonsterState/SubWorldMonsterState"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "subWorldId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlDelMonster/ResDelMonster": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseResponse"
+                    }
+                }
+            ]
+        },
+        "PtlExitSubWorld/ReqExitSubWorld": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseRequest"
+                    }
+                }
+            ]
+        },
+        "PtlExitSubWorld/ResExitSubWorld": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseResponse"
+                    }
+                }
+            ]
         },
         "PtlJoinSubWorld/ReqJoinSubWorld": {
             "type": "Interface",
@@ -646,6 +854,25 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "content",
                     "type": {
                         "type": "String"
+                    }
+                }
+            ]
+        },
+        "s2cMsg/MsgMonsterStates/MsgMonsterStates": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "monsterStates",
+                    "type": {
+                        "type": "Interface",
+                        "indexSignature": {
+                            "keyType": "String",
+                            "type": {
+                                "type": "Reference",
+                                "target": "../../types/SubWorldMonsterState/SubWorldMonsterState"
+                            }
+                        }
                     }
                 }
             ]

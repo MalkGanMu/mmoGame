@@ -6,6 +6,7 @@ import { SubWorldUserState } from "../../shared/types/SubWorldUserState";
 import { worldServer } from "../../WorldServerMain";
 import { WorldServerConn } from "../WorldServer";
 import { SubWorldConfigItem } from "../../shared/SubWorldConfig";
+import { SubWorldMonsterState } from "../../shared/types/SubWorldMonsterState";
 
 export class SubWorld {
 
@@ -16,6 +17,9 @@ export class SubWorld {
     conns: WorldServerConn[] = [];
     userStates: {
         [uid: string]: SubWorldUserState
+    } = {};
+    monsterStates: { 
+        [uid: string]: SubWorldMonsterState
     } = {};
     logger: PrefixLogger;
 
@@ -48,6 +52,12 @@ export class SubWorld {
         this._setInterval(() => {
             this.broadcastMsg('s2cMsg/UserStates', {
                 userStates: this.userStates
+            })
+        }, 100);
+        // 每 100ms 同步一次 MonsterStates
+        this._setInterval(() => {
+            this.broadcastMsg('s2cMsg/MonsterStates', {
+                monsterStates: this.monsterStates
             })
         }, 100);
     }

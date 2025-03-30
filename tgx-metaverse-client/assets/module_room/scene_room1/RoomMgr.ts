@@ -18,6 +18,9 @@ import { UserMgr } from "../../module_basic/scripts/UserMgr";
 import { ResJoinSubWorld } from "../../module_basic/shared/protocols/worldServer/PtlJoinSubWorld";
 // 导入网络工具类
 import { NetUtil } from "../../module_basic/scripts/NetUtil";
+import { SubWorldMonsterState } from "../../module_basic/shared/types/SubWorldMonsterState";
+import { ReqAddMonster, ResAddMonster } from "../../module_basic/shared/protocols/worldServer/PtlAddMonster";
+import { ReqDelMonster, ResDelMonster } from "../../module_basic/shared/protocols/worldServer/PtlDelMonster";
 
 // 用于与世界服务器通信的 WebSocket 客户端实例
 let _worldConn: WsClient<ServiceType> = null;
@@ -137,6 +140,55 @@ export class RoomMgr {
         // 返回包含成功信息和响应结果的对象
         return { isSucc: true, res: retJoin.res };
     }
+
+    /**
+         * 调用添加怪物的 API
+         * @param monsterState 怪物的状态
+         * @returns 添加怪物的响应结果的 Promise
+         */
+    public static async addMonster(monsterState: SubWorldMonsterState): Promise<ResAddMonster> {
+        if (!_worldConn) {
+            throw new Error('World connection is not established.');
+        }
+        const req: ReqAddMonster = {
+            monsterState,
+            subWorldId: _params.subWorldId
+        };
+        const ret = await _worldConn.callApi('AddMonster', req);
+        if (!ret.isSucc) {
+            tgxUIAlert.show('添加怪物失败: ' + ret.err.message);
+            throw new Error('添加怪物失败: ' + ret.err.message);
+        }
+        return ret.res;
+    }
+
+    /**
+     * 调用删除怪物的 API
+     * @param req 删除怪物的请求参数，包含子世界 ID 和怪物状态
+     * @returns 删除怪物的响应结果的 Promise
+     */
+    public static async delMonster(monsterState: SubWorldMonsterState): Promise<ResDelMonster> {
+        if (!_worldConn) {
+            throw new Error('World connection is not established.');
+        }
+        const req: ReqAddMonster = {
+            monsterState,
+            subWorldId: _params.subWorldId
+        };
+        const ret = await _worldConn.callApi('DelMonster', req);
+        if (!ret.isSucc) {
+            tgxUIAlert.show('删除怪物失败: ' + ret.err.message);
+            throw new Error('删除怪物失败: ' + ret.err.message);
+        }
+        return ret.res;
+    }
+
+
+
+
+
+
+
 
     /**
      * 获取进入子世界的参数

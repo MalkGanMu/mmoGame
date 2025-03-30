@@ -1285,6 +1285,13 @@
     },
     "_enabled": true,
     "__prefab": null,
+    "prefabMonster": {
+      "__uuid__": "776c9108-8830-4999-9bae-fe71a32a3b45",
+      "__expectedType__": "cc.Prefab"
+    },
+    "Monsters": {
+      "__id__": 42
+    },
     "prefabPlayer": {
       "__uuid__": "59a7042c-2db1-4416-9dbf-8c194515c45e",
       "__expectedType__": "cc.Prefab"

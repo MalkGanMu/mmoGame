@@ -1,18 +1,25 @@
-import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween, CameraComponent, Camera } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween, CameraComponent, Camera, random } from 'cc';
 import { DIYFloowCamera2D } from '../../core_tgx/easy_camera/DIYFloowCamera2D';
 import { CharacterMovement2D } from '../../core_tgx/easy_controller/CharacterMovement2D';
 import { tgxEasyController, tgxEasyControllerEvent } from '../../core_tgx/tgx';
+import { SubWorldMonsterState } from '../../module_basic/shared/types/SubWorldMonsterState';
 import { SubWorldUserState } from '../../module_basic/shared/types/SubWorldUserState';
 import { SceneUtil } from '../../scripts/SceneDef';
+import { Monster } from '../prefabs/Monsters/Monster';
 import { Player } from '../prefabs/Players/Player';
 import { RoomMgr } from './RoomMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('room')
 export class room extends Component {
+    @property(Prefab)
+    prefabMonster!: Prefab;
+
+    @property(Node)
+    Monsters!: Node;
 
     selfPlayer?: Player;
-    
+
     // 玩家预制体，用于创建新的玩家节点，通过属性面板赋值
     @property(Prefab)
     prefabPlayer!: Prefab;
@@ -33,6 +40,15 @@ export class room extends Component {
 
         // 确保与服务器建立连接
         await RoomMgr.ensureConnected();
+
+        // 生成怪物
+        const newMonsterState =  this.spawnMonster();
+        RoomMgr.addMonster(newMonsterState);
+
+        // 使用 scheduleOnce 方法，确保删除操作只执行一次
+        this.scheduleOnce(() => {
+            RoomMgr.delMonster(newMonsterState);
+        }, 10);
 
         // 定时向服务器上报玩家状态，每 0.1 秒执行一次
         this.schedule(() => {
@@ -60,13 +76,9 @@ export class room extends Component {
         tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT, this.onMovement, this);
         // 监听控制器的移动停止事件
         tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT_STOP, this.onMovmentStop, this);
-        
+
     }
-    /**
-     * 处理玩家移动事件
-     * @param degree 移动的角度
-     * @param strengthen 移动的强度
-     */
+    //处理玩家移动事件
     onMovement(degree: number, strengthen: number) {
         // 如果当前玩家实例不存在，直接返回
         if (!this.selfPlayer) {
@@ -76,9 +88,7 @@ export class room extends Component {
         this.selfPlayer.aniState = 'walking';
     }
 
-    /**
-     * 处理玩家停止移动事件
-     */
+    //处理玩家停止移动事件
     onMovmentStop() {
         // 如果当前玩家实例不存在，直接返回
         if (!this.selfPlayer) {
@@ -87,9 +97,7 @@ export class room extends Component {
         // 设置玩家的动画状态为 idle
         this.selfPlayer.aniState = 'idle';
     }
-    update(deltaTime: number) {
-        
-    }
+    update(deltaTime: number) { }
 
     private _initClient() {
         // 创建世界连接
@@ -125,13 +133,66 @@ export class room extends Component {
             // 更新玩家数量
             RoomMgr.playerNum = this.players.children.length;
         });
+
+        // 监听服务器的敌人状态更新消息
+        RoomMgr.worldConn.listenMsg('s2cMsg/MonsterStates', v => {
+            this._updateMonsterState(v.monsterStates);
+        });
+    }
+
+    private spawnMonster(): SubWorldMonsterState {
+        let node = instantiate(this.prefabMonster);
+        node.name = 'monster_' + Date.now();
+        const newMonsterState:SubWorldMonsterState = {
+            uid: node.name,
+            pos: {
+                x: 100,
+                y: Math.random() * 20 + 100,
+                z: 0
+            },
+            health: 100,
+            aniState: 'idle'
+        };
+        node.setPosition(newMonsterState.pos.x, newMonsterState.pos.y, newMonsterState.pos.z);
+        this.Monsters.addChild(node);
+        return newMonsterState;
+    }
+
+    private _updateMonsterState(monsterStates: { [uid: string]: SubWorldMonsterState }) {
+        // 用于存储 this.Monsters 中所有怪物节点的 uid
+        const existingMonsterUids = new Set<string>();
+        this.Monsters.children.forEach(child => {
+            existingMonsterUids.add(child.name);
+        });
+    
+        // 处理需要添加的怪物并更新所有怪物状态
+        for (let uid in monsterStates) {
+            let node = this.Monsters.getChildByName(uid);
+            if (!node) {
+                node = instantiate(this.prefabMonster);
+                node.name = uid;
+                this.Monsters.addChild(node);
+            }
+            const monster = node.getComponent(Monster)!;
+            monster.updateState(monsterStates[uid]);
+            // 从 existingMonsterUids 中移除已处理的 uid
+            existingMonsterUids.delete(uid);
+        }
+    
+        // 处理需要删除的怪物
+        existingMonsterUids.forEach(uid => {
+            let node = this.Monsters.getChildByName(uid);
+            if (node) {
+                node.destroy();
+            }
+        });
     }
 
     /**
      * 更新用户状态的方法
      * @param state 子世界用户状态
      */
-     private _updateUserState(state: SubWorldUserState) {
+    private _updateUserState(state: SubWorldUserState) {
         // 根据用户 ID 获取玩家节点
         let node = this.players.getChildByName(state.uid);
 
@@ -161,7 +222,7 @@ export class room extends Component {
                 this.selfPlayer.node['_isMyPlayer_'] = true;
                 // 设置 CharacterMovement2D 组件的 isCurrentPlayer 属性为 true
                 movementComponent.isCurrentPlayer = true;
-    
+
 
                 // 获取 tgxFollowCamera2D 脚本组件实例
                 const followCameraScript = this.followCamera.getComponent(DIYFloowCamera2D);
@@ -183,16 +244,7 @@ export class room extends Component {
             node.setPosition(state.pos.x, state.pos.y, state.pos.z);
             console.log(`移动玩家: ${node.name}`);
         }
-        // // 移除节点位置上的所有动画
-        // TweenSystem.instance.ActionManager.removeAllActionsFromTarget(node.position as any);
-        // // 使用插值动画平滑更新节点的位置和旋转
-        // tween(node.position).to(0.1, state.pos, {
-        //     onUpdate: (v, ratio) => {
-        //         // 这里原代码可能有误，node!.position = node!.position; 可删除
-        //         // 更新节点的旋转
-        //         // node!.rotation = Quat.slerp(tmpQuat, node!.rotation, state.rotation, ratio!);
-        //     }
-        // }).tag(99).start();
+
     }
 
     /**

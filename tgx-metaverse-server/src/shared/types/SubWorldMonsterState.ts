@@ -1,15 +1,9 @@
-export interface SubWorldEnemyState {
+export interface SubWorldMonsterState {
     uid: string,
     pos: {
         x: number,
         y: number,
         z: number
-    },
-    rotation: {
-        x: number,
-        y: number,
-        z: number,
-        w: number
     },
     health: number,
     aniState: PlayerAniState
