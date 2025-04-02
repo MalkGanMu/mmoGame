@@ -20,7 +20,7 @@ export class Physics extends Component {
                     body.group = 2;
                     body.type = ERigidBody2DType.Static;
                     let collider = tiled.node.addComponent(BoxCollider2D);
-                    collider.offset.set(-((wallLayerSize.width - 1) * tiledSize.width / 2), -((wallLayerSize.height - 1) * tiledSize.height / 2));
+                    collider.offset.set((tiledSize.width / 2), (tiledSize.height / 2));
                     collider.size.set(tiledSize);
                     collider.apply();
                 }

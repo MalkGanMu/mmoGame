@@ -58,7 +58,7 @@ export async function ApiJoinSubWorld(call: ApiCall<ReqJoinSubWorld, ResJoinSubW
     subWorld.userStates[currentUser.uid] = {
         uid: currentUser.uid,
         pos: {
-            x: Math.random() * 10,
+            x: 0,
             y: 0,
             z: Math.random() * 10
         },
