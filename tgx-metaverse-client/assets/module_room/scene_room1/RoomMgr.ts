@@ -21,6 +21,9 @@ import { NetUtil } from "../../module_basic/scripts/NetUtil";
 import { SubWorldMonsterState } from "../../module_basic/shared/types/SubWorldMonsterState";
 import { ReqAddMonster, ResAddMonster } from "../../module_basic/shared/protocols/worldServer/PtlAddMonster";
 import { ReqDelMonster, ResDelMonster } from "../../module_basic/shared/protocols/worldServer/PtlDelMonster";
+import { SubWorldArrowState } from "../../module_basic/shared/types/SubWorldArrowState";
+import { ReqAddArrow, ResAddArrow } from "../../module_basic/shared/protocols/worldServer/PtlAddArrow";
+import { ResDelArrow } from "../../module_basic/shared/protocols/worldServer/PtlDelArrow";
 
 // 用于与世界服务器通信的 WebSocket 客户端实例
 let _worldConn: WsClient<ServiceType> = null;
@@ -183,7 +186,47 @@ export class RoomMgr {
         return ret.res;
     }
 
+    /**
+         * 调用添加子弹的 API
+         * @param monsterState 子弹的状态
+         * @returns 添加子弹的响应结果的 Promise
+         */
+     public static async addArrow(arrowState: SubWorldArrowState): Promise<ResAddArrow> {
+        if (!_worldConn) {
+            throw new Error('World connection is not established.');
+        }
+        const req: ReqAddArrow = {
+            arrowState,
+            subWorldId: _params.subWorldId
+        };
+        const ret = await _worldConn.callApi('AddArrow', req);
+        if (!ret.isSucc) {
+            tgxUIAlert.show('添加子弹失败: ' + ret.err.message);
+            throw new Error('添加子弹失败: ' + ret.err.message);
+        }
+        return ret.res;
+    }
 
+    /**
+     * 调用删除子弹的 API
+     * @param req 删除子弹的请求参数，包含子世界 ID 和子弹状态
+     * @returns 删除子弹的响应结果的 Promise
+     */
+    public static async delArrow(arrowState: SubWorldArrowState): Promise<ResDelArrow> {
+        if (!_worldConn) {
+            throw new Error('World connection is not established.');
+        }
+        const req: ReqAddArrow = {
+            arrowState,
+            subWorldId: _params.subWorldId
+        };
+        const ret = await _worldConn.callApi('DelArrow', req);
+        if (!ret.isSucc) {
+            tgxUIAlert.show('删除子弹失败: ' + ret.err.message);
+            throw new Error('删除子弹失败: ' + ret.err.message);
+        }
+        return ret.res;
+    }
 
 
 

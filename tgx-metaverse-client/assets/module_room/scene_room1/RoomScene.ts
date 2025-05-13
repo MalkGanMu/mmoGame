@@ -9,6 +9,7 @@ import { SceneUtil } from '../../scripts/SceneDef';
 import { Monster } from '../prefabs/Monsters/Monster';
 import { Player } from '../prefabs/Players/Player';
 import { RoomMgr } from './RoomMgr';
+import { Arrow } from '../prefabs/Arrow/Arrow';
 const { ccclass, property } = _decorator;
 
 @ccclass('room')
@@ -114,8 +115,8 @@ export class room extends Component {
 
     // 处理屏幕点击事件
     onClick(vector) {
-        this.spawnArrow(vector)
-        console.log('点击屏幕', vector)
+        const newArrowState = this.spawnArrow(vector)
+        RoomMgr.addArrow(newArrowState)
     }
 
     update(deltaTime: number) { }
@@ -157,8 +158,65 @@ export class room extends Component {
         });
 
         // 监听服务器的敌人状态更新消息
-        // RoomMgr.worldConn.listenMsg('s2cMsg/MonsterStates', v => {
-        //     this._updateMonsterState(v.monsterStates);
+        RoomMgr.worldConn.listenMsg('s2cMsg/MonsterStates', v => {
+            this._updateMonsterState(v.monsterStates);
+        });
+
+        // 监听子弹
+        RoomMgr.worldConn.listenMsg('s2cMsg/ArrowStates', v => {
+            this._updateArrowState(v.arrowStates);
+        });
+    }
+
+    private _updateArrowState(arrowStates: { [uid: string]: SubWorldArrowState }) {
+        // // 用于存储 this.Monsters 中所有怪物节点的 uid
+        // const existingArrowUids = new Set<string>();
+        // this.Arrows.children.forEach(child => {
+        //     existingArrowUids.add(child.name);
+        // });
+    
+        // 处理需要添加的子弹并更新所有子弹状态
+        for (let uid in arrowStates) {
+            let node = this.Arrows.getChildByName(uid);
+            if (node) {
+                return
+            }
+            node = instantiate(this.prefabArrow);
+            node.name = uid;
+            this.Arrows.addChild(node);
+            node.setWorldPosition(arrowStates[uid].pos.x, arrowStates[uid].pos.y, arrowStates[uid].pos.z);
+            node.getComponent(RigidBody2D).linearVelocity = new Vec2(
+                arrowStates[uid].v.x * 10,
+                arrowStates[uid].v.y * 10
+            );
+            // 计算箭矢在2D平面上的旋转角度
+            const angle = Math.atan2(arrowStates[uid].v.y, arrowStates[uid].v.x) * 180 / Math.PI;
+            // 设置箭矢旋转（2D游戏绕Z轴旋转）
+            node.setRotationFromEuler(0, 0, angle + 90);
+            // 从 existingMonsterUids 中移除已处理的 uid
+            // existingArrowUids.delete(uid);
+        }
+    
+        // // 处理需要删除的子弹
+        // existingArrowUids.forEach(uid => {
+        //     let node = this.Arrows.getChildByName(uid);
+        //     if (node) {
+        //         const delArrowState:SubWorldArrowState = {
+        //             uid: node.name,
+        //             pos: {
+        //                 x: 0,
+        //                 y: 0,
+        //                 z: 0
+        //             },
+        //             v: {
+        //                 x: 0,
+        //                 y: 0,
+        //                 z: 0
+        //             }
+        //         };
+        //         RoomMgr.delArrow(delArrowState);
+        //         node.destroy();
+        //     }
         // });
     }
 
@@ -170,7 +228,6 @@ export class room extends Component {
 
         const newArrowState:SubWorldArrowState = {
             uid: node.name,
-            // pos: this.playersState[RoomMgr.currentUser.uid].pos,
             pos: this.selfPlayer.node.getWorldPosition(),
             v: {
                 x: vector.x,
@@ -179,11 +236,10 @@ export class room extends Component {
             }
         }
         node.setWorldPosition(newArrowState.pos.x, newArrowState.pos.y, newArrowState.pos.z);
-        node.lookAt(new Vec3(
-            newArrowState.pos.x + newArrowState.v.x,
-            newArrowState.pos.y + newArrowState.v.y,
-            newArrowState.pos.z + newArrowState.v.z
-        ));
+        // 计算箭矢在2D平面上的旋转角度
+        const angle = Math.atan2(newArrowState.v.y, newArrowState.v.x) * 180 / Math.PI;
+        // 设置箭矢旋转（2D游戏绕Z轴旋转）
+        node.setRotationFromEuler(0, 0, angle + 90);
         const speed = 10; // 调整速度参数
         node.getComponent(RigidBody2D).linearVelocity = new Vec2(
             newArrowState.v.x * speed,
@@ -228,7 +284,7 @@ export class room extends Component {
                 this.Monsters.addChild(node);
             }
             const monster = node.getComponent(Monster)!;
-            monster.updateState(monsterStates[uid]);
+            // monster.updateState(monsterStates[uid]);
             // 从 existingMonsterUids 中移除已处理的 uid
             existingMonsterUids.delete(uid);
         }

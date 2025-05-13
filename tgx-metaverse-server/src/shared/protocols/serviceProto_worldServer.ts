@@ -3,11 +3,14 @@ import { MsgUpdateSubWorldState } from './worldServer/admin/MsgUpdateSubWorldSta
 import { ReqAuth, ResAuth } from './worldServer/admin/PtlAuth';
 import { ReqCreateSubWorld, ResCreateSubWorld } from './worldServer/admin/PtlCreateSubWorld';
 import { MsgUserState } from './worldServer/c2sMsg/MsgUserState';
+import { ReqAddArrow, ResAddArrow } from './worldServer/PtlAddArrow';
 import { ReqAddMonster, ResAddMonster } from './worldServer/PtlAddMonster';
+import { ReqDelArrow, ResDelArrow } from './worldServer/PtlDelArrow';
 import { ReqDelMonster, ResDelMonster } from './worldServer/PtlDelMonster';
 import { ReqExitSubWorld, ResExitSubWorld } from './worldServer/PtlExitSubWorld';
 import { ReqJoinSubWorld, ResJoinSubWorld } from './worldServer/PtlJoinSubWorld';
 import { ReqSendChat, ResSendChat } from './worldServer/PtlSendChat';
+import { MsgArrowStates } from './worldServer/s2cMsg/MsgArrowStates';
 import { MsgChat } from './worldServer/s2cMsg/MsgChat';
 import { MsgMonsterStates } from './worldServer/s2cMsg/MsgMonsterStates';
 import { MsgUserExit } from './worldServer/s2cMsg/MsgUserExit';
@@ -24,9 +27,17 @@ export interface ServiceType {
             req: ReqCreateSubWorld,
             res: ResCreateSubWorld
         },
+        "AddArrow": {
+            req: ReqAddArrow,
+            res: ResAddArrow
+        },
         "AddMonster": {
             req: ReqAddMonster,
             res: ResAddMonster
+        },
+        "DelArrow": {
+            req: ReqDelArrow,
+            res: ResDelArrow
         },
         "DelMonster": {
             req: ReqDelMonster,
@@ -48,6 +59,7 @@ export interface ServiceType {
     msg: {
         "admin/UpdateSubWorldState": MsgUpdateSubWorldState,
         "c2sMsg/UserState": MsgUserState,
+        "s2cMsg/ArrowStates": MsgArrowStates,
         "s2cMsg/Chat": MsgChat,
         "s2cMsg/MonsterStates": MsgMonsterStates,
         "s2cMsg/UserExit": MsgUserExit,
@@ -57,7 +69,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 9,
+    "version": 11,
     "services": [
         {
             "id": 13,
@@ -86,8 +98,20 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "msg"
         },
         {
+            "id": 24,
+            "name": "AddArrow",
+            "type": "api",
+            "conf": {}
+        },
+        {
             "id": 21,
             "name": "AddMonster",
+            "type": "api",
+            "conf": {}
+        },
+        {
+            "id": 25,
+            "name": "DelArrow",
             "type": "api",
             "conf": {}
         },
@@ -114,6 +138,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "name": "SendChat",
             "type": "api",
             "conf": {}
+        },
+        {
+            "id": 26,
+            "name": "s2cMsg/ArrowStates",
+            "type": "msg"
         },
         {
             "id": 17,
@@ -419,6 +448,125 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
+        "PtlAddArrow/ReqAddArrow": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseRequest"
+                    }
+                }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "arrowState",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../../types/SubWorldArrowState/SubWorldArrowState"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "subWorldId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "../base/BaseRequest": {
+            "type": "Interface"
+        },
+        "../../types/SubWorldArrowState/SubWorldArrowState": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "uid",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "pos",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "x",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "y",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "z",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "v",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "x",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "y",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "z",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "PtlAddArrow/ResAddArrow": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseResponse"
+                    }
+                }
+            ]
+        },
+        "../base/BaseResponse": {
+            "type": "Interface"
+        },
         "PtlAddMonster/ReqAddMonster": {
             "type": "Interface",
             "extends": [
@@ -448,9 +596,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "../base/BaseRequest": {
-            "type": "Interface"
-        },
+        
         "../../types/SubWorldMonsterState/SubWorldMonsterState": {
             "type": "Interface",
             "properties": [
@@ -560,8 +706,46 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "../base/BaseResponse": {
-            "type": "Interface"
+        "PtlDelArrow/ReqDelArrow": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseRequest"
+                    }
+                }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "arrowState",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../../types/SubWorldArrowState/SubWorldArrowState"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "subWorldId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlDelArrow/ResDelArrow": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "../base/BaseResponse"
+                    }
+                }
+            ]
         },
         "PtlDelMonster/ReqDelMonster": {
             "type": "Interface",
@@ -827,6 +1011,25 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "../base/BaseResponse"
+                    }
+                }
+            ]
+        },
+        "s2cMsg/MsgArrowStates/MsgArrowStates": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "arrowStates",
+                    "type": {
+                        "type": "Interface",
+                        "indexSignature": {
+                            "keyType": "String",
+                            "type": {
+                                "type": "Reference",
+                                "target": "../../types/SubWorldArrowState/SubWorldArrowState"
+                            }
+                        }
                     }
                 }
             ]

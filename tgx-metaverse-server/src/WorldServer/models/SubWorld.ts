@@ -7,6 +7,7 @@ import { worldServer } from "../../WorldServerMain";
 import { WorldServerConn } from "../WorldServer";
 import { SubWorldConfigItem } from "../../shared/SubWorldConfig";
 import { SubWorldMonsterState } from "../../shared/types/SubWorldMonsterState";
+import { SubWorldArrowState } from "../../shared/types/SubWorldArrowState";
 
 export class SubWorld {
 
@@ -21,6 +22,9 @@ export class SubWorld {
     monsterStates: { 
         [uid: string]: SubWorldMonsterState
     } = {};
+    arrowStates: {
+        [uid: string]: SubWorldArrowState
+    } = {}
     logger: PrefixLogger;
 
     /**
