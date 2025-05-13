@@ -29,6 +29,12 @@ export class EasyControllerEvent{
      * @param buttonName: string, indicates which button is pressed. 
      */
     public static BUTTON:string = 'EasyControllerEvent.BUTTON';
+
+    /**
+     * Dispatched when the screen is clicked, emits the vector relative to the screen center.
+     * @param vector: Vec3, the vector relative to the screen center.
+     */
+    public static CLICK_VECTOR: string = 'EasyControllerEvent.CLICK_VECTOR';
 }
 
 export class EasyController{

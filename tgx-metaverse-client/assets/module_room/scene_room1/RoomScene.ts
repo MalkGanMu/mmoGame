@@ -1,8 +1,9 @@
-import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween, CameraComponent, Camera, random } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Canvas, assetManager, AssetManager, director, TweenSystem, tween, CameraComponent, Camera, random, Vec3, RigidBody2D, Vec2 } from 'cc';
 import { DIYFloowCamera2D } from '../../core_tgx/easy_camera/DIYFloowCamera2D';
 import { CharacterMovement2D } from '../../core_tgx/easy_controller/CharacterMovement2D';
 import { tgxEasyController, tgxEasyControllerEvent } from '../../core_tgx/tgx';
 import { SubWorldMonsterState } from '../../module_basic/shared/types/SubWorldMonsterState';
+import { SubWorldArrowState } from '../../module_basic/shared/types/SubWorldArrowState';
 import { SubWorldUserState } from '../../module_basic/shared/types/SubWorldUserState';
 import { SceneUtil } from '../../scripts/SceneDef';
 import { Monster } from '../prefabs/Monsters/Monster';
@@ -24,6 +25,13 @@ export class room extends Component {
     @property(Prefab)
     prefabPlayer!: Prefab;
 
+    // 箭预制体
+    @property(Prefab)
+    prefabArrow!: Prefab;
+
+    @property(Node)
+    Arrows!: Node;
+
     @property(Node)
     players!: Node;
 
@@ -33,6 +41,10 @@ export class room extends Component {
 
     // 记录玩家的上一个动画状态，用于判断是否需要向服务器上报状态
     private _playerLastState: string = '';
+
+    private playersState: {
+        [uid: string]: SubWorldUserState
+    } = {};
 
     async start() {
         // 初始化客户端
@@ -46,9 +58,9 @@ export class room extends Component {
         RoomMgr.addMonster(newMonsterState);
 
         // 使用 scheduleOnce 方法，确保删除操作只执行一次
-        this.scheduleOnce(() => {
-            RoomMgr.delMonster(newMonsterState);
-        }, 10);
+        // this.scheduleOnce(() => {
+        //     RoomMgr.delMonster(newMonsterState);
+        // }, 10);
 
         // 定时向服务器上报玩家状态，每 0.1 秒执行一次
         this.schedule(() => {
@@ -76,6 +88,8 @@ export class room extends Component {
         tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT, this.onMovement, this);
         // 监听控制器的移动停止事件
         tgxEasyController.on(tgxEasyControllerEvent.MOVEMENT_STOP, this.onMovmentStop, this);
+        // 监听控制器的点击屏幕事件
+        tgxEasyController.on(tgxEasyControllerEvent.CLICK_VECTOR, this.onClick, this);
 
     }
     //处理玩家移动事件
@@ -97,6 +111,13 @@ export class room extends Component {
         // 设置玩家的动画状态为 idle
         this.selfPlayer.aniState = 'idle';
     }
+
+    // 处理屏幕点击事件
+    onClick(vector) {
+        this.spawnArrow(vector)
+        console.log('点击屏幕', vector)
+    }
+
     update(deltaTime: number) { }
 
     private _initClient() {
@@ -109,6 +130,7 @@ export class room extends Component {
             for (let uid in v.userStates) {
                 // 更新用户状态
                 this._updateUserState(v.userStates[uid]);
+                this.playersState[uid] = v.userStates[uid];
             }
             // 更新玩家数量
             RoomMgr.playerNum = this.players.children.length;
@@ -135,9 +157,41 @@ export class room extends Component {
         });
 
         // 监听服务器的敌人状态更新消息
-        RoomMgr.worldConn.listenMsg('s2cMsg/MonsterStates', v => {
-            this._updateMonsterState(v.monsterStates);
-        });
+        // RoomMgr.worldConn.listenMsg('s2cMsg/MonsterStates', v => {
+        //     this._updateMonsterState(v.monsterStates);
+        // });
+    }
+
+    private spawnArrow(vector): SubWorldArrowState {
+        let node = instantiate(this.prefabArrow);
+        node.name = 'arrow_' + Date.now();
+        this.Arrows.addChild(node);
+        this.players.getChildByName(this.selfPlayer.name);
+
+        const newArrowState:SubWorldArrowState = {
+            uid: node.name,
+            // pos: this.playersState[RoomMgr.currentUser.uid].pos,
+            pos: this.selfPlayer.node.getWorldPosition(),
+            v: {
+                x: vector.x,
+                y: vector.y,
+                z: vector.z
+            }
+        }
+        node.setWorldPosition(newArrowState.pos.x, newArrowState.pos.y, newArrowState.pos.z);
+        node.lookAt(new Vec3(
+            newArrowState.pos.x + newArrowState.v.x,
+            newArrowState.pos.y + newArrowState.v.y,
+            newArrowState.pos.z + newArrowState.v.z
+        ));
+        const speed = 10; // 调整速度参数
+        node.getComponent(RigidBody2D).linearVelocity = new Vec2(
+            newArrowState.v.x * speed,
+            newArrowState.v.y * speed
+        );
+        console.log(' ', newArrowState.v.x, newArrowState.v.y)
+        this.Arrows.addChild(node);
+        return newArrowState
     }
 
     private spawnMonster(): SubWorldMonsterState {
@@ -146,8 +200,8 @@ export class room extends Component {
         const newMonsterState:SubWorldMonsterState = {
             uid: node.name,
             pos: {
-                x: 100,
-                y: Math.random() * 20 + 100,
+                x: 0,
+                y: 0,
                 z: 0
             },
             health: 100,
@@ -183,6 +237,17 @@ export class room extends Component {
         existingMonsterUids.forEach(uid => {
             let node = this.Monsters.getChildByName(uid);
             if (node) {
+                const delMonsterState:SubWorldMonsterState = {
+                    uid: node.name,
+                    pos: {
+                        x: 0,
+                        y: 0,
+                        z: 0
+                    },
+                    health: 100,
+                    aniState: 'idle'
+                };
+                RoomMgr.delMonster(delMonsterState);
                 node.destroy();
             }
         });
@@ -220,6 +285,7 @@ export class room extends Component {
                 this.selfPlayer = player;
                 // 标记该节点为当前玩家节点
                 this.selfPlayer.node['_isMyPlayer_'] = true;
+                this.selfPlayer.node.setPosition(state.pos.x, state.pos.y, state.pos.z);
                 // 设置 CharacterMovement2D 组件的 isCurrentPlayer 属性为 true
                 movementComponent.isCurrentPlayer = true;
 

@@ -48,7 +48,10 @@ export class FlowFieldMT extends Component {
         if (this.tiledMap) {
             // 初始化地图网格
             this.initGrid();
-            this.schedule(this.updateFlowField, 10); // 每隔 10 秒更新流场积分
+            setTimeout(() => {
+                this.updateFlowField();
+            }, 1000);
+            this.schedule(this.updateFlowField, 5); // 每隔 5 秒更新流场积分
         }
     }
 
@@ -90,9 +93,9 @@ export class FlowFieldMT extends Component {
                 const tileX = Math.floor(Math.abs((worldPosition.x + this.offsetX)) / this.tileSize.x);
                 const tileY = Math.floor(Math.abs((worldPosition.y + this.offsetY)) / this.tileSize.y);
                 targets.push(new Vec2(tileX, tileY));
-                console.log('TargetsWPos:', worldPosition.x, worldPosition.y); // 输出获取到的目标点坐标
+                // console.log('TargetsWPos:', worldPosition.x, worldPosition.y); // 输出获取到的目标点坐标
             });
-            console.log('Targets:', targets); // 输出获取到的目标点坐标
+            // console.log('Targets:', targets); // 输出获取到的目标点坐标
 
             // 为每个目标创建一个新的 grid
             for (let i = 0; i < targets.length; i++) {
@@ -120,8 +123,8 @@ export class FlowFieldMT extends Component {
             this.calculateFinalGrid();
             // 计算最终的流动方向
             this.calculateFlowField();
-            this.printFlowFieldScores();
-            this.printFlowFieldDirections(); // 调用打印流场方向的方法
+            // this.printFlowFieldScores();
+            // this.printFlowFieldDirections(); // 调用打印流场方向的方法
         }
     }
 
@@ -217,8 +220,8 @@ export class FlowFieldMT extends Component {
     }
 
     public getDirection(position: Vec2): Vec2 {
-        const x = Math.floor(position.x / this.tileSize.x);
-        const y = Math.floor(position.y / this.tileSize.y);
+        const x = Math.floor(Math.abs((position.x + this.offsetX)) / this.tileSize.x);
+        const y = Math.floor(Math.abs((position.y + this.offsetY)) / this.tileSize.y);
         if (x >= 0 && x < this.gridSize.x && y >= 0 && y < this.gridSize.y) {
             return this.finalGrid[y][x].direction;
         }
